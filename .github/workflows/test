@@ -1,0 +1,3 @@
+import time
+
+print("test 모드 입니다.")
