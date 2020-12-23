@@ -17,8 +17,8 @@ class GUIMODE():
         right_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 상세설명창을 띄우는 구역을 생성
         left_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 실행과 버튼 구역을 생성
 
-        right_frame.pack(side="right", fill="both", expand=True)
-        left_frame.pack(side="left", fill="both", expand=True)
+        right_frame.pack(side="right", fill="both", expand=True)#오른쪽 프레임을 실행
+        left_frame.pack(side="left", fill="both", expand=True)#왼쪽 프레임을 실행
 
         self.ip_dst_data = tkinter.StringVar()
 
