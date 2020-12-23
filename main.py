@@ -14,11 +14,11 @@ class GUIMODE():
         win.geometry("800x600")
         win.resizable(False, False)
 
-        right_frame = tkinter.Frame(win, relief="groove", bd=1)
-        left_frame = tkinter.Frame(win, relief="groove", bd=1)
+        right_frame = tkinter.Frame(win, relief="groove", bd=1)# 공격문의 상세설명창을 띄우는 
+        left_frame = tkinter.Frame(win, relief="groove", bd=1)# 
 
-        right_frame.pack(side="right", fill="both", expand=True)
-        left_frame.pack(side="left", fill="both", expand=True)
+        right_frame.pack(side="right", fill="both", expand=True)#
+        left_frame.pack(side="left", fill="both", expand=True)#
 
         self.ip_dst_data = tkinter.StringVar()
 
