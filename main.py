@@ -94,7 +94,7 @@ class GUIMODE():
         for _ in range(100):
             self.packet.configure(text=lines)
 
-    def rudy(self):
+    def rudy(self): #김진
         dst_ip = self.ip_dst_data.get()
         useragents = [
             "User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
