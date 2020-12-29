@@ -112,14 +112,14 @@ def Teardrop_exbutton_win(self):
     nw.mainloop()
 def Slowread_exbutton_win(self):
     nw = tkinter.Tk()
-    nw.title("ICMP Flood 설명문")
+    nw.title("Slowread 설명문")
     nw.geometry("400x250+450+450")
-    Slowread_label = Label(nw, justify=CENTER, height=1, width=15, font=("맑은 고딕", 15), text="ICMP Flood")
+    Slowread_label = Label(nw, justify=CENTER, height=1, width=15, font=("맑은 고딕", 15), text="Slowread")
     Slowread2_label = Label(nw, justify=LEFT, height=50, width=70, text="  정의\n"
-                                                                    "   - TCP 세그먼트 헤더 중 Window Size 값을 '0' 또는 작은 \n     크기로 조작하여 전송함으로써 \n     웹서버의 Connection 자원을 \n     고갈시키는 공격 \n"
-                                                                    "   - Slowread 공격 기법은 대부분의 Apache 웹서버가 연결지연을 제한하지\n     않는 사실을 이용한다.\n"
-                                                                    "  대응법\n"
-                                                                    "   - 비정상적으로 작은 Window Size의 SYN \n     패킷을 차단하는 방법으로 방어할 수 있다.\n\n")
+                                                                        "   - TCP 세그먼트 헤더 중 Window Size 값을 '0' 또는\n     작은 크기로 조작하여 전송함으로써 웹서버의\n     Connection 자원을 고갈시키는 공격\n"
+                                                                        "   - Slowread 공격 기법은 대부분의 Apache 웹서버가\n     연결지연을 제한하지 않는 사실을 이용한다.\n\n"
+                                                                        "  대응법\n"
+                                                                        "   - 비정상적으로 작은 Window Size의 SYN 패킷을\n     차단하는 방법으로 방어할 수 있다.\n\n")
 
     Slowread_label.pack()
     Slowread2_label.pack()
@@ -227,7 +227,7 @@ class GUIMODE():
         ICMP_button.place(x = 185, y = 475)
         rudy_button.place(x = 185, y = 501)
         Teardrop_button.place(x = 185, y = 527)
-        Slowread_button.place(x=185, y=555)
+        Slowread_button.place(x=185, y=553)
 
         win.mainloop()
 
